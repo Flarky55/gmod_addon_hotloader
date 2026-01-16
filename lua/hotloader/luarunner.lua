@@ -34,6 +34,7 @@ function loadedAddon.New( id )
         files = {},
         effectNames = {},
         entityNames = {},
+        ppNames = {},
         autorun = {
             shared = {},
             client = {},
@@ -145,7 +146,10 @@ function loadedAddon:load()
 
     self:loadAutorun()
 
-    if CLIENT then self:loadEffects() end
+    if CLIENT then 
+        self:loadEffects() 
+        self:loadPostProcesses()
+    end
     self:loadEntities()
     self:loadSweps()
 end
@@ -253,6 +257,10 @@ function loadedAddon:analyzeFiles()
             local exploded = string.Explode( "/", filename )
             local weaponName = exploded[3]
             table.insert( self.swepNames, weaponName )
+        elseif string.StartsWith( filename, "lua/postprocess" ) then
+            local exploded = string.Explode( "/", filename )
+            local ppName = exploded[3] -- pp name :P (i'm actually very sorry for that comment.)
+            table.insert( self.ppNames, ppName )
         end
     end
     local totalAutorun = #self.autorun.shared + #self.autorun.client + #self.autorun.server
@@ -301,6 +309,14 @@ function loadedAddon:loadSweps()
         if CLIENT then self:runLua( { "lua/weapons/" .. swepName .. "/cl_init.lua" } ) end
         if SERVER then self:runLua( { "lua/weapons/" .. swepName .. "/init.lua" } ) end
         weapons.Register( SWEP, swepName )
+    end
+end
+
+function loadedAddon:loadPostProcesses()
+    if CLIENT then
+        for _, ppName in ipairs( self.ppNames ) do
+            self:runLua( { "lua/postprocess/" .. ppName } )
+        end
     end
 end
 
